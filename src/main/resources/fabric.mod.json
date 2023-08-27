@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"id": "custom-placement-preview",
+	"version": "${version}",
+	"name": "Custom Placement Preview",
+	"description": "Show a preview of the block you are going to place",
+	"authors": [
+		"Andrew6rant (Andrew Grant)"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "MIT",
+	"icon": "assets/custom-placement-preview/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"io.github.andrew6rant.customplacementpreview.CustomPlacementPreview"
+		],
+		"client": [
+			"io.github.andrew6rant.customplacementpreview.CustomPlacementPreviewClient"
+		]
+	},
+	"mixins": [
+		{
+			"config": "custom-placement-preview.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.14.22",
+		"minecraft": "~1.20.1",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}

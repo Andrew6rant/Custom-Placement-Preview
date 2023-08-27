@@ -49,10 +49,10 @@ public abstract class WorldRendererMixin {
                             ci.cancel();
                         } else {
                             BlockPos newPos = pos.offset(blockHitResult.getSide());
-                            //if (blockItem.getBlock().canPlaceAt(state, this.world, newPos)) { // this doesn't work properly
+                            if (blockItem.getBlock().canPlaceAt(heldState, this.world, pos)) {
                                 drawCuboidShapeOutline(matrices, vertexConsumer, heldState.getOutlineShape(this.world, newPos, ShapeContext.of(entity)), (double) newPos.getX() - cameraX, (double) newPos.getY() - cameraY, (double) newPos.getZ() - cameraZ, 0.0F, 0.0F, 0.0F, 0.4F);
                                 ci.cancel();
-                            //}
+                            }
                         }
                     }
                 }

@@ -3,6 +3,7 @@
 	"package": "io.github.andrew6rant.customplacementpreview.mixin.client",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
+		"BedBlockMixin",
 		"WorldRendererMixin"
 	],
 	"injectors": {

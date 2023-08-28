@@ -20,6 +20,9 @@
 		],
 		"client": [
 			"io.github.andrew6rant.customplacementpreview.CustomPlacementPreviewClient"
+		],
+		"modmenu": [
+			"io.github.andrew6rant.customplacementpreview.config.ConfigEntrypoint"
 		]
 	},
 	"mixins": [

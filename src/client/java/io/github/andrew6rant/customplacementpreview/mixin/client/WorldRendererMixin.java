@@ -1,10 +1,9 @@
 package io.github.andrew6rant.customplacementpreview.mixin.client;
 
-import io.github.andrew6rant.customplacementpreview.DrawUtil;
+import io.github.andrew6rant.customplacementpreview.Util;
 import io.github.andrew6rant.customplacementpreview.api.ICustomPlacementPreview;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.WorldRenderer;
@@ -17,15 +16,19 @@ import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import static io.github.andrew6rant.customplacementpreview.config.ClientConfig.outlineColorAARRGGBB;
+import static io.github.andrew6rant.customplacementpreview.config.ClientConfig.replaceableColorAARRGGBB;
 
 @Mixin(WorldRenderer.class)
 public abstract class WorldRendererMixin {
@@ -44,26 +47,21 @@ public abstract class WorldRendererMixin {
             Hand hand = playerEntity.getActiveHand();
             if (playerEntity.getStackInHand(hand) != null && playerEntity.getStackInHand(hand).getItem() instanceof BlockItem blockItem) {
                 BlockHitResult blockHitResult = (BlockHitResult)this.client.crosshairTarget;
-                ItemPlacementContext context = new ItemPlacementContext(this.world, playerEntity, playerEntity.getActiveHand(), playerEntity.getStackInHand(playerEntity.getActiveHand()), blockHitResult);
+                ItemPlacementContext context = new ItemPlacementContext(this.world, playerEntity, hand, playerEntity.getStackInHand(hand), blockHitResult);
                 if (context.canPlace()) {
                     Block block = blockItem.getBlock();
-                    BlockState heldState;
-                    if (block instanceof ICustomPlacementPreview customPlacementPreviewBlock) {
-                        heldState = customPlacementPreviewBlock.getCustomPlacementState(block, context);
-                    } else {
-                        heldState = block.getPlacementState(context);
-                    }
-
+                    BlockState heldState = Util.getCustomPlacementState(block, context);
                     if (heldState != null) {
                         if (context.canReplaceExisting()) {
-                            VoxelShape outlineShape = DrawUtil.getCustomOutlineShape(block, heldState, this.world, pos, entity);
-                            drawCuboidShapeOutline(matrices, vertexConsumer, outlineShape, (double) pos.getX() - cameraX, (double) pos.getY() - cameraY, (double) pos.getZ() - cameraZ, 0.0F, 0.0F, 0.0F, 0.4F);
+                            VoxelShape outlineShape = Util.getCanReplaceVoxelShape(block, heldState, this.world, pos, entity);
+                            int hexColor = Util.parseConfigHex(outlineColorAARRGGBB);
+                            customplacementpreview$drawCustomShapeOutline(matrices, vertexConsumer, cameraX, cameraY, cameraZ, outlineShape, pos, hexColor);
                             ci.cancel();
                         } else {
-                            BlockPos newPos = pos.offset(blockHitResult.getSide());
                             if (blockItem.getBlock().canPlaceAt(heldState, this.world, pos)) {
-                                VoxelShape outlineShape = DrawUtil.getCustomOutlineShape(block, heldState, this.world, pos, entity);
-                                drawCuboidShapeOutline(matrices, vertexConsumer, outlineShape, (double) newPos.getX() - cameraX, (double) newPos.getY() - cameraY, (double) newPos.getZ() - cameraZ, 0.0F, 0.0F, 0.0F, 0.4F);
+                                VoxelShape outlineShape = Util.getCustomVoxelShape(block, heldState, this.world, pos, entity);
+                                int hexColor = Util.parseConfigHex(replaceableColorAARRGGBB);
+                                customplacementpreview$drawCustomShapeOutline(matrices, vertexConsumer, cameraX, cameraY, cameraZ, outlineShape, pos.offset(blockHitResult.getSide()), hexColor);
                                 ci.cancel();
                             }
                         }
@@ -71,6 +69,14 @@ public abstract class WorldRendererMixin {
                 }
             }
         }
+    }
+
+    @Unique
+    private void customplacementpreview$drawCustomShapeOutline(MatrixStack matrices, VertexConsumer vertexConsumer, double cameraX, double cameraY, double cameraZ, VoxelShape outlineShape, BlockPos pos, int hexColor) {
+        drawCuboidShapeOutline(
+            matrices, vertexConsumer, outlineShape,
+            (double) pos.getX() - cameraX, (double) pos.getY() - cameraY, (double) pos.getZ() - cameraZ,
+            (hexColor >> 16 & 255) / 255f, (hexColor >> 8 & 255) / 255f, (hexColor & 255) / 255f, (hexColor >>> 24) / 255f);
     }
 }
 

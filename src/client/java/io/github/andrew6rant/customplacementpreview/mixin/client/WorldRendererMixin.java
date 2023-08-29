@@ -1,7 +1,6 @@
 package io.github.andrew6rant.customplacementpreview.mixin.client;
 
 import io.github.andrew6rant.customplacementpreview.Util;
-import io.github.andrew6rant.customplacementpreview.api.ICustomPlacementPreview;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
@@ -16,7 +15,6 @@ import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.shape.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -27,8 +25,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static io.github.andrew6rant.customplacementpreview.config.ClientConfig.outlineColorAARRGGBB;
-import static io.github.andrew6rant.customplacementpreview.config.ClientConfig.replaceableColorAARRGGBB;
+import static io.github.andrew6rant.customplacementpreview.config.ClientConfig.*;
 
 @Mixin(WorldRenderer.class)
 public abstract class WorldRendererMixin {
@@ -48,35 +45,68 @@ public abstract class WorldRendererMixin {
             if (playerEntity.getStackInHand(hand) != null && playerEntity.getStackInHand(hand).getItem() instanceof BlockItem blockItem) {
                 BlockHitResult blockHitResult = (BlockHitResult)this.client.crosshairTarget;
                 ItemPlacementContext context = new ItemPlacementContext(this.world, playerEntity, hand, playerEntity.getStackInHand(hand), blockHitResult);
+                Block block = blockItem.getBlock();
                 if (context.canPlace()) {
-                    Block block = blockItem.getBlock();
-                    BlockState heldState = Util.getCustomPlacementState(block, context);
+                    BlockState heldState = Util.getValidPlacementState(block, context);
                     if (heldState != null) {
                         if (context.canReplaceExisting()) {
-                            VoxelShape outlineShape = Util.getCanReplaceVoxelShape(block, heldState, this.world, pos, entity);
-                            int hexColor = Util.parseConfigHex(outlineColorAARRGGBB);
-                            customplacementpreview$drawCustomShapeOutline(matrices, vertexConsumer, cameraX, cameraY, cameraZ, outlineShape, pos, hexColor);
-                            ci.cancel();
+                            customplacementpreview$drawWireframe(
+                                matrices, vertexConsumer,
+                                cameraX, cameraY, cameraZ,
+                                Util.getIntersectingWireframe(block, heldState, this.world, pos, entity),
+                                pos,
+                                Util.parseConfigHex(outlineColorAARRGGBB),
+                                ci);
                         } else {
-                            if (blockItem.getBlock().canPlaceAt(heldState, this.world, pos)) {
-                                VoxelShape outlineShape = Util.getCustomVoxelShape(block, heldState, this.world, pos, entity);
-                                int hexColor = Util.parseConfigHex(replaceableColorAARRGGBB);
-                                customplacementpreview$drawCustomShapeOutline(matrices, vertexConsumer, cameraX, cameraY, cameraZ, outlineShape, pos.offset(blockHitResult.getSide()), hexColor);
-                                ci.cancel();
+                            if (block.canPlaceAt(heldState, this.world, pos)) {
+                                customplacementpreview$drawWireframe(
+                                    matrices, vertexConsumer,
+                                    cameraX, cameraY, cameraZ,
+                                    Util.getValidWireframe(block, heldState, this.world, pos, entity),
+                                    pos.offset(blockHitResult.getSide()),
+                                    Util.parseConfigHex(replaceableColorAARRGGBB),
+                                    ci);
                             }
                         }
+                    } else {
+                        // null blockstate (bad placement)
+                        customplacementpreview$drawInvalidWireframe(
+                            block, context, pos, entity, blockHitResult,
+                            matrices, vertexConsumer,
+                            cameraX, cameraY, cameraZ,
+                            ci);
                     }
+                } else {
+                    // actually invalid (within block)
+                    customplacementpreview$drawInvalidWireframe(
+                        block, context, pos, entity, blockHitResult,
+                        matrices, vertexConsumer,
+                        cameraX, cameraY, cameraZ,
+                        ci);
                 }
             }
         }
     }
 
     @Unique
-    private void customplacementpreview$drawCustomShapeOutline(MatrixStack matrices, VertexConsumer vertexConsumer, double cameraX, double cameraY, double cameraZ, VoxelShape outlineShape, BlockPos pos, int hexColor) {
+    private void customplacementpreview$drawInvalidWireframe(Block block, ItemPlacementContext context, BlockPos pos, Entity entity, BlockHitResult blockHitResult, MatrixStack matrices, VertexConsumer vertexConsumer, double cameraX, double cameraY, double cameraZ, CallbackInfo ci) {
+        BlockPos NewPos = pos.offset(blockHitResult.getSide());
+        if (hideInvalidEqualBlocks && this.world.getBlockState(NewPos).getBlock().equals(block)) {
+            ci.cancel();
+        } else {
+            VoxelShape outlineShape = Util.getInvalidWireframe(block, Util.getInvalidPlacementState(block, context), this.world, pos, entity);
+            int hexColor = Util.parseConfigHex(invalidColorAARRGGBB);
+            customplacementpreview$drawWireframe(matrices, vertexConsumer, cameraX, cameraY, cameraZ, outlineShape, NewPos, hexColor, ci);
+        }
+    }
+
+    @Unique
+    private void customplacementpreview$drawWireframe(MatrixStack matrices, VertexConsumer vertexConsumer, double cameraX, double cameraY, double cameraZ, VoxelShape outlineShape, BlockPos pos, int hexColor, CallbackInfo ci) {
         drawCuboidShapeOutline(
             matrices, vertexConsumer, outlineShape,
             (double) pos.getX() - cameraX, (double) pos.getY() - cameraY, (double) pos.getZ() - cameraZ,
             (hexColor >> 16 & 255) / 255f, (hexColor >> 8 & 255) / 255f, (hexColor & 255) / 255f, (hexColor >>> 24) / 255f);
+        ci.cancel();
     }
 }
 

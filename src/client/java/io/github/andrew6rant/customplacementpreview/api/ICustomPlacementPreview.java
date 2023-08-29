@@ -15,20 +15,25 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ICustomPlacementPreview {
     @Nullable
-    default BlockState getCustomPlacementState(Block block, ItemPlacementContext ctx) {
+    default BlockState getValidPlacementState(Block block, ItemPlacementContext ctx) {
         return block.getPlacementState(ctx);
     }
 
-    default VoxelShape getCustomPlacementVoxelShape(BlockState blockState, BlockView world, BlockPos pos, ShapeContext context) {
+    @Nullable
+    default BlockState getInvalidPlacementState(Block block, ItemPlacementContext ctx) {
+        return this.getValidPlacementState(block, ctx);
+    }
+
+    default VoxelShape getValidWireframe(BlockState blockState, BlockView world, BlockPos pos, ShapeContext context) {
         return blockState.getOutlineShape(world, pos, context);
     }
 
-    default VoxelShape getCanReplaceVoxelShape(BlockState blockState, BlockView world, BlockPos pos, ShapeContext context) {
-        return this.getCustomPlacementVoxelShape(blockState, world, pos, context);
+    default VoxelShape getIntersectingWireframe(BlockState blockState, BlockView world, BlockPos pos, ShapeContext context) {
+        return this.getValidWireframe(blockState, world, pos, context);
     }
 
-    default VoxelShape getInvalidVoxelShape(BlockState blockState, BlockView world, BlockPos pos, ShapeContext context) {
-        return this.getCustomPlacementVoxelShape(blockState, world, pos, context);
+    default VoxelShape getInvalidWireframe(BlockState blockState, BlockView world, BlockPos pos, ShapeContext context) {
+        return this.getValidWireframe(blockState, world, pos, context);
     }
 
     default ItemStack getCustomItemStackInHand(PlayerEntity playerEntity, Hand hand) {

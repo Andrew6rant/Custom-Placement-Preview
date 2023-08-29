@@ -13,40 +13,50 @@ import net.minecraft.world.World;
 
 public class Util {
 
-    public static BlockState getCustomPlacementState(Block block, ItemPlacementContext context) {
+    public static BlockState getValidPlacementState(Block block, ItemPlacementContext context) {
         BlockState heldState;
         if (block instanceof ICustomPlacementPreview customPlacementPreviewBlock) {
-            heldState = customPlacementPreviewBlock.getCustomPlacementState(block, context);
+            heldState = customPlacementPreviewBlock.getValidPlacementState(block, context);
         } else {
             heldState = block.getPlacementState(context);
         }
         return heldState;
     }
 
-    public static VoxelShape getCustomVoxelShape(Block block, BlockState heldState, World world, BlockPos pos, Entity entity) {
+    public static BlockState getInvalidPlacementState(Block block, ItemPlacementContext context) {
+        BlockState heldState;
+        if (block instanceof ICustomPlacementPreview customPlacementPreviewBlock) {
+            heldState = customPlacementPreviewBlock.getInvalidPlacementState(block, context);
+        } else {
+            heldState = block.getDefaultState();
+        }
+        return heldState;
+    }
+
+    public static VoxelShape getValidWireframe(Block block, BlockState heldState, World world, BlockPos pos, Entity entity) {
         VoxelShape outlineShape;
         if (block instanceof ICustomPlacementPreview customPlacementPreviewBlock) {
-             outlineShape = customPlacementPreviewBlock.getCustomPlacementVoxelShape(heldState, world, pos, ShapeContext.of(entity));
+             outlineShape = customPlacementPreviewBlock.getValidWireframe(heldState, world, pos, ShapeContext.of(entity));
         } else {
             outlineShape = heldState.getOutlineShape(world, pos, ShapeContext.of(entity));
         }
         return outlineShape;
     }
 
-    public static VoxelShape getCanReplaceVoxelShape(Block block, BlockState heldState, World world, BlockPos pos, Entity entity) {
+    public static VoxelShape getIntersectingWireframe(Block block, BlockState heldState, World world, BlockPos pos, Entity entity) {
         VoxelShape outlineShape;
         if (block instanceof ICustomPlacementPreview customPlacementPreviewBlock) {
-            outlineShape = customPlacementPreviewBlock.getCanReplaceVoxelShape(heldState, world, pos, ShapeContext.of(entity));
+            outlineShape = customPlacementPreviewBlock.getIntersectingWireframe(heldState, world, pos, ShapeContext.of(entity));
         } else {
             outlineShape = heldState.getOutlineShape(world, pos, ShapeContext.of(entity));
         }
         return outlineShape;
     }
 
-    public static VoxelShape getInvalidVoxelShape(Block block, BlockState heldState, World world, BlockPos pos, Entity entity) {
+    public static VoxelShape getInvalidWireframe(Block block, BlockState heldState, World world, BlockPos pos, Entity entity) {
         VoxelShape outlineShape;
         if (block instanceof ICustomPlacementPreview customPlacementPreviewBlock) {
-            outlineShape = customPlacementPreviewBlock.getInvalidVoxelShape(heldState, world, pos, ShapeContext.of(entity));
+            outlineShape = customPlacementPreviewBlock.getInvalidWireframe(heldState, world, pos, ShapeContext.of(entity));
         } else {
             outlineShape = heldState.getOutlineShape(world, pos, ShapeContext.of(entity));
         }

@@ -6,6 +6,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
 import net.minecraft.block.enums.BedPart;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShape;
@@ -23,7 +24,12 @@ public class BedBlockMixin extends HorizontalFacingBlock implements ICustomPlace
     }
 
     @Override
-    public VoxelShape getCustomPlacementVoxelShape(BlockState blockState, BlockView world, BlockPos pos, ShapeContext context) {
+    public BlockState getInvalidPlacementState(Block block, ItemPlacementContext ctx) {
+        return block.getDefaultState().with(FACING, ctx.getHorizontalPlayerFacing());
+    }
+
+    @Override
+    public VoxelShape getValidWireframe(BlockState blockState, BlockView world, BlockPos pos, ShapeContext context) {
         VoxelShape leg1 = Block.createCuboidShape(0, 0, 13, 3, 3, 16);
         VoxelShape leg2 = Block.createCuboidShape(13, 0, 13, 16, 3, 16);
         VoxelShape body = Block.createCuboidShape(0, 3, 0, 16, 9, 16);

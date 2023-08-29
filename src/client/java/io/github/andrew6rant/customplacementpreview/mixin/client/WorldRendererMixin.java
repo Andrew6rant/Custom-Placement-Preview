@@ -91,10 +91,11 @@ public abstract class WorldRendererMixin {
     @Unique
     private void customplacementpreview$drawInvalidWireframe(Block block, ItemPlacementContext context, BlockPos pos, Entity entity, BlockHitResult blockHitResult, MatrixStack matrices, VertexConsumer vertexConsumer, double cameraX, double cameraY, double cameraZ, CallbackInfo ci) {
         BlockPos NewPos = pos.offset(blockHitResult.getSide());
-        if (hideInvalidEqualBlocks && this.world.getBlockState(NewPos).getBlock().equals(block)) {
+        BlockState heldState = Util.getInvalidPlacementState(block, context);
+        if (hideInvalidEqualBlocks && this.world.getBlockState(NewPos).equals(heldState)) {
             ci.cancel();
         } else {
-            VoxelShape outlineShape = Util.getInvalidWireframe(block, Util.getInvalidPlacementState(block, context), this.world, pos, entity);
+            VoxelShape outlineShape = Util.getInvalidWireframe(block, heldState, this.world, pos, entity);
             int hexColor = Util.parseConfigHex(invalidColorAARRGGBB);
             customplacementpreview$drawWireframe(matrices, vertexConsumer, cameraX, cameraY, cameraZ, outlineShape, NewPos, hexColor, ci);
         }

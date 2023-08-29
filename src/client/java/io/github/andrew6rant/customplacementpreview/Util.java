@@ -28,7 +28,12 @@ public class Util {
         if (block instanceof ICustomPlacementPreview customPlacementPreviewBlock) {
             heldState = customPlacementPreviewBlock.getInvalidPlacementState(block, context);
         } else {
-            heldState = block.getDefaultState();
+            BlockState tempState = block.getPlacementState(context);
+            if (tempState == null) {
+                heldState = block.getDefaultState();
+            } else {
+                heldState = tempState;
+            }
         }
         return heldState;
     }
